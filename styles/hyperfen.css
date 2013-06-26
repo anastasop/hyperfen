@@ -1,0 +1,118 @@
+
+#header {
+    border-bottom: black solid 1px;
+    background-color: lightblue;
+    font-size: 160%;
+}
+
+#applicationDescription {
+    margin: 1em 0 1em 0;
+}
+
+
+
+
+
+
+.publication {
+    margin: 1em auto 1em auto;
+    width: 75%;
+    text-align: left;
+}
+
+.publication #publicationDescription {
+    font-style: italic;
+}
+
+.publication #publicationGames {
+    margin: 1em auto 1em auto;
+}
+
+.publication #publicationGames #publicationGamesTitle {
+    border-bottom: solid;
+    font-weight: bold;
+    font-size: 120%;
+}
+
+
+
+
+.chess-game {
+    background-color: white;
+}
+
+.game-header {
+    background-color: white;
+    color: black;
+    font-size: 140%;
+    margin: 8px;
+    text-align: center;
+}
+
+.game-header span {
+    display: block;
+}
+
+#gameViewer-moves {
+    height: 256px;
+    overflow-y: scroll;
+}
+
+.chess-cards {
+    margin-right: auto;
+    margin-left: auto;
+    text-align: center;
+}
+
+.chess-card {
+    border: black solid 1px;
+    background-color: #FFFFAA;
+    font-size: 16px;
+    font-family: Arial, Helvetica, sans-serif;
+
+    width: 520px;
+    display: inline-block;
+    vertical-align: top;
+
+    margin-top: 4px;
+    margin-bottom: 4px;
+}
+
+.chess-card-title {
+    border-bottom: black solid 1px;
+    font-size: 100%;
+    color: black;
+    font-weight: bold;
+    text-align: center;
+}
+
+.chess-card-data {
+    margin: 16px;
+}
+
+:target {
+    background-color: #AAFFFF;
+}
+
+
+/*
+	Error Page
+*/
+
+.errorPage {
+    margin: 1em 0 1em 0;
+}
+
+.errorDescription {
+    font-weight: bold;
+    background-color: yellow;
+}
+
+
+/* Override ChessTempo js viewer */
+.ct-black-square {
+    background-color: lightblue;
+}
+.ct-white-square {
+  background-color: white;
+}

@@ -1,0 +1,161 @@
+{{define "header"}}
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset="utf-8"/>
+  <title>HyperFen</title>
+  <link type="text/css" rel="stylesheet" href="/styles/board-min.css"/>
+  <link type="text/css" rel="stylesheet" href="/styles/hyperfen.css"/>
+  <script src="/js/jquery-1.9.1.min.js"></script>
+  <script src="/js/hyperfen.js"></script>
+  <script src="/js/pgnyui.js"></script>
+  <script src="/js/pgnviewer.js"></script>
+</head>
+
+<body>
+<div id="header">
+  <a href="/">Home</a> <a href="/index">Games</a>
+</div>
+{{end}}
+
+
+{{define "footer"}}
+</body>
+  <script>$(".chess-fen").each(Hyperfen.RenderDiagram);</script>
+  <script>
+    $("#enableViewer").click(function() {
+    	var cn = $("#gameViewer")
+    	if (cn.attr("data-loaded") == "true") {
+    		cn.toggle();
+    	} else {
+      		new PgnViewer({
+    			boardName: "gameViewer",
+        			pgnString: $("#gameViewer-pgn").text(),
+        			pieceSize: 29,
+        			pieceSet: 'case',
+        			movesFormat: 'display'
+      		});
+      		cn.attr("data-loaded", "true");
+      		$("#gameViewer").show();
+    	}
+    });
+  </script>
+</html>
+{{end}}
+
+
+{{define "home"}}
+{{template "header"}}
+<div id="applicationDescription">
+Welcome to <strong>hyper-fen</strong>. It is an experiment to merge chess and hypertext
+</div>
+
+<form method="POST" action="/publish" enctype="multipart/form-data">
+<fieldset style="display: inline;">
+<legend>Publish Games</legend>
+    <table>
+        <tr><td>Title</td><td><input type="text" name="title" required="true"  style="width: 512px;"></input></td></tr>
+        <tr><td>Description</td><td><textarea name="description" rows="8" style="width: 512px;" required="true"></textarea></td></tr>
+        <tr><td>PGN file</td><td><input type="file" name="pgnfile" style="width: 512px;"/></td></tr>
+        <tr><td>PGN URL</td><td><input type="text" name="pgnurl" style="width: 512px;"/></td></tr>
+        <tr><td><button type="submit">Publish</button></td><td></td></tr>
+    </table>
+</fieldset>
+</form>
+{{template "footer"}}
+{{end}}
+
+
+{{define "publication"}}
+{{template "header"}}
+<div class="publication">
+  <h1>{{.Title}}</h1>
+  <div id="publicationDescription">
+    {{.Description | printf "%s" | alreadyHTMLencoded}}
+  </div>
+  <div id="publicationGames">
+    <span id="publicationGamesTitle">Games</span>
+    {{template "gamesOfPublication" .}}
+  </div>
+</div>
+{{template "footer"}}
+{{end}}
+
+
+{{define "index"}}
+{{template "header"}}
+{{range .}}
+<div>
+<h2 style="background-color: lightgreen;"><a href="/publications/{{.Key}}">{{.Title}}</a></h2>
+<div style="width: 60%;">{{.Description | printf "%s" | alreadyHTMLencoded}}</div>
+{{template "gamesOfPublication" .}}
+</div>
+{{end}}
+{{template "footer"}}
+{{end}}
+
+
+{{define "gameTagLine"}}
+{{.White}} {{if .WhiteElo}} {{.WhiteElo}} {{end}} - {{.Black}} {{if .BlackElo}} {{.BlackElo}} {{end}} {{.Result}} <strong>[{{.ECO}}]</strong> {{.Event}}, {{.Date}}
+{{end}}
+
+
+{{define "gamesOfPublication"}}
+<ol>
+{{$publicationKey := .Key}}
+{{range .Games}}
+  <li><a href="/publications/{{$publicationKey}}/{{.Key}}" style="text-decoration: none;">{{template "gameTagLine" .Tags}}</a></li>
+{{end}}
+</ol>
+{{end}}
+
+
+{{define "game"}}
+{{template "header"}}
+<div class="chess-game">
+  <div class="game-header">
+    {{with .Tags}}
+    <span>{{.White}} {{if .WhiteElo}} {{.WhiteElo}} {{end}} - {{.Black}} {{if .BlackElo}} {{.BlackElo}} {{end}} {{.Result}} <strong>[{{.ECO}}]</strong></span>
+    <span>{{.Event}} {{.Date}} </span>
+    {{if .Annotator}}<span>Annotated by {{.Annotator}}</span>{{end}}
+    {{end}}
+  </div>
+
+  <a href="?view=pgn">PGN</a>
+  <button id="enableViewer">Player</button> by <a href="http://chesstempo.com/">ChessTempo</a>
+
+  <div id="gameViewer" class="gameCanvas" data-loaded="false" style="display:none;">
+  <table>
+    <tr><td><div id="gameViewer-container"></div></td><td><div id="gameViewer-moves"></div></td></tr>
+  </table>
+  </div>
+
+  <div class="chess-cards">
+  {{$gameKey := .Key}}
+  {{range .Cards}}
+    <div class="chess-card" id="{{.ID}}">
+        <div class="chess-card-title"> 
+            <a href="#{{.ID}}">{{.Title}}</a>
+        </div>
+        <div class="chess-card-data">
+            <div class="chess-fen" data-fen="{{.Fen}}"></div>
+            <div class="chess-comment">{{.Description | printf "%s" | alreadyHTMLencoded}}</div>
+        </div>
+    </div>
+  {{end}}
+  </div>
+
+  <div id="gameViewer-pgn" style="display: none;">{{.PGN | printf "%s" | alreadyHTMLencoded}}</div>
+</div>
+{{template "footer"}}
+{{end}}
+
+
+{{define "error"}}
+{{template "header"}}
+<div class="errorPage">
+Application Error: <span class="errorDescription">{{.}}</span>
+</div>
+{{template "footer"}}
+{{end}}

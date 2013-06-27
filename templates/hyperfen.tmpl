@@ -27,6 +27,19 @@
     $("#enableViewer").click(function() {
     	var cn = $("#gameViewer")
     	if (cn.attr("data-loaded") == "true") {
+			if (cn.attr("data-visible") == "true") {
+				$(".chess-cards").css({
+					"height": "auto",
+					"overflow-y": "visible",
+				});
+				cn.attr("data-visible", "false");
+			} else {
+				$(".chess-cards").css({
+					"height": "512px",
+					"overflow-y": "scroll",
+				});
+				cn.attr("data-visible", "true");
+			}
     		cn.toggle();
     	} else {
       		new PgnViewer({
@@ -37,7 +50,12 @@
         			movesFormat: 'display'
       		});
       		cn.attr("data-loaded", "true");
-      		$("#gameViewer").show();
+       		cn.attr("data-visible", "true");
+			$(".chess-cards").css({
+				"height": "512px",
+				"overflow-y": "scroll",
+			});
+     		$("#gameViewer").show();
     	}
     });
   </script>
@@ -48,16 +66,60 @@
 {{define "home"}}
 {{template "header"}}
 <div id="applicationDescription">
-Welcome to <strong>hyper-fen</strong>. It is an experiment to merge chess and hypertext
+Hyperfen is a tool for publishing chess games. It is also an
+experiment to merge <a href="http://en.wikipedia.org/wiki/Portable_Game_Notation">PGN</a>,
+the notation for chess games
+and <a href="http://en.wikipedia.org/wiki/Hypertext">hypertext</a>, the building block
+of the web.
+<p>
+The players upload PGN files with analyzed games. Hyperfen processes these PGNs and
+generates one page for each game. This page contains a javascript viewer for the
+game and a number of
+<em>cards</em>. These cards display annotated diagrams for some positions of the game.
+For example if the PGN contains <code>1. e4 {the favorite of Bobby Fischer}</code>,
+then a card will be generated with the diagram after <code>1. e4</code> and the
+comment <code>the favorite of Bobby Fischer</code> beneath it. You can see some
+examples in the <a href="/index">Games</a> section. The use of cards makes
+it easy to make a quick look at a game and get a feeling for it.
+Cards are more suitable for mobile devices than game viewers and more
+easier to share and link. Moreover, most games, especially those of club players,
+are not interesting in their whole but contain interesting positions and combinations and
+chess cards can highlight these.
+<p>
+The PGN comments can contain URLs that link to sites with additional information
+about the game. For example if the PGN contains <code>11. f3 {As he stated in
+the postmortem https://www.youtube.com/watch?v=9fhu5APBshk ....}</code> the
+generated card will have a link to YouTube to see the video with the player
+analyzing his game. Moreover the hyperfen cards have unique URLs and you can
+link to them to associate games together. The possibilities are endless. You
+can link games with similar endings, or combinations with the same theme or
+similar strategic themes, or opening novelties and so on.
+<p>
+Chess, computers and the internet is a winning combination. Chess games are
+distributed throught the internet and major tournaments have live game streaming.
+There are many sites where you learn chess news, play online, take lessons or
+kibitz about games, players and other topics. Powerful chess programs run on
+your computer that analyze games for you and give you access to big game databases.
+Hyperfen encourages players to analyze their games and publish their analysis with links
+to similar games.
+<p>
+Hyperfen runs on <a href="https://developers.google.com/appengine/">Google AppEngine</a>
+and is written in <a href="http://golang.org">Go</a>. The javascript game viewer is from
+<a href="http://chesstempo.com">ChessTempo</a>.
+The code is in <a href="https://github.com/anastasop/hyperfen">Github</a> under the
+BSD license.
+<p>
+Enjoy!!
 </div>
 
 <form method="POST" action="/publish" enctype="multipart/form-data">
 <fieldset style="display: inline;">
 <legend>Publish Games</legend>
     <table>
-        <tr><td>Title</td><td><input type="text" name="title" required="true"  style="width: 512px;"></input></td></tr>
-        <tr><td>Description</td><td><textarea name="description" rows="8" style="width: 512px;" required="true"></textarea></td></tr>
+        <tr><td>Title</td><td><input type="text" name="title" required="true" placeholder="London Candidates 2013" style="width: 512px;"></input></td></tr>
+        <tr><td>Description</td><td><textarea name="description" rows="8" placeholder="Magnus Carlsen wins the tournament after a last round thriller" style="width: 512px;" required="true"></textarea></td></tr>
         <tr><td>PGN file</td><td><input type="file" name="pgnfile" style="width: 512px;"/></td></tr>
+        <tr><td>or</td><td></td></tr>
         <tr><td>PGN URL</td><td><input type="text" name="pgnurl" style="width: 512px;"/></td></tr>
         <tr><td><button type="submit">Publish</button></td><td></td></tr>
     </table>
@@ -125,7 +187,7 @@ Welcome to <strong>hyper-fen</strong>. It is an experiment to merge chess and hy
   <a href="?view=pgn">PGN</a>
   <button id="enableViewer">Player</button> by <a href="http://chesstempo.com/">ChessTempo</a>
 
-  <div id="gameViewer" class="gameCanvas" data-loaded="false" style="display:none;">
+  <div id="gameViewer" class="gameCanvas" data-loaded="false" data-visible="false" style="display:none;">
   <table>
     <tr><td><div id="gameViewer-container"></div></td><td><div id="gameViewer-moves"></div></td></tr>
   </table>

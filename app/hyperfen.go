@@ -214,7 +214,7 @@ func PublishHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	} else {
 		if err := datastore.RunInTransaction(c, func(tc appengine.Context) error {
-			publicationKey := datastore.NewKey(c, "Publication", base64encOfSHA1([]byte(pgnDescription), pgnBytes), 0, nil)
+			publicationKey := datastore.NewKey(c, "Publication", base64encOfSHA1([]byte(pgnTitle), []byte(pgnDescription), pgnBytes), 0, nil)
 			publication := Publication{
 				publicationKey.StringID(),
 				pgnTitle,
@@ -311,20 +311,10 @@ func IndexHandler(w http.ResponseWriter, r *http.Request) {
 
 	q := datastore.NewQuery("Publication").Order("-Published")
 	publications := make([]Publication, 0)
-	if keys, err := q.GetAll(c, &publications); err == nil {
-		for i := 0; i < len(publications); i++ {
-			publications[i].Games = make([]ChessGame, 0)
-			q := datastore.NewQuery("ChessGame").Ancestor(keys[i]).Limit(3)
-			if _, err := q.GetAll(c, &publications[i].Games); err != nil {
-				handleInternalError(c, w, "IndexHandler: fetch Publication.Games: datastore ops failed", err)
-				return
-			}
-		}
-	} else {
+	if _, err := q.GetAll(c, &publications); err != nil {
 		handleInternalError(c, w, "IndexHandler: fetch Publications: datastore ops failed", err)
 		return
 	}
-
 	renderHtmlResponse(w, http.StatusOK, "index", publications);
 }
 

@@ -47,6 +47,26 @@ type ChessGame struct {
 	Tags ChessTags
 	Cards []ChessCard
 	PGN []byte
+
+	OpenGraph OpenGraphData
+}
+
+type ChessDiagram struct {
+	Fen string
+	Pgnbytes []byte
+}
+
+type OpenGraphData struct {
+	Title string
+	Type string
+	Image string
+	ImageType string
+	URL string
+	Description string
+	Sitename string
+
+	PublishedTime time.Time
+	Author string
 }
 
 type Publication struct {

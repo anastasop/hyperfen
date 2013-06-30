@@ -50,6 +50,7 @@ func init() {
 	mux.Post("/publish", http.HandlerFunc(PublishHandler))
 	mux.Get("/publications/:key/:id", http.HandlerFunc(GameHandler))
 	mux.Get("/publications/:key", http.HandlerFunc(PublicationHandler))
+	mux.Get("/diagrams/:id", http.HandlerFunc(DiagramHandler))
 	mux.Get("/", http.HandlerFunc(HomeHandler))
 	http.Handle("/", mux)
 }
@@ -260,8 +261,9 @@ func GameHandler(w http.ResponseWriter, r *http.Request) {
 	view := r.URL.Query().Get("view")
 
 	publicationKey := datastore.NewKey(c, "Publication", key, 0, nil)
+	gameKey := datastore.NewKey(c, "ChessGame", "", id, publicationKey)
 	var game ChessGame
-	switch err := datastore.Get(c, datastore.NewKey(c, "ChessGame", "", id, publicationKey), &game); true {
+	switch err := datastore.Get(c, gameKey, &game); true {
 	case err == datastore.ErrNoSuchEntity:
 		renderHtmlResponse(w, http.StatusBadRequest, "error", fmt.Errorf("There is no game with key %s/%d", key, id));
 		return
@@ -270,12 +272,48 @@ func GameHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if view == "" || view == "cards" {
-		renderHtmlResponse(w, http.StatusOK, "game", game);
-	} else {
+	if view == "pgn" {
 		w.Header().Set("Content-Type", "text/plain")
 		w.Write(game.PGN)
+		return
 	}
+
+	// lazy init opengraph data
+	if game.OpenGraph.Title == "" {
+		var lastAnnotatedCard ChessCard
+		if len(game.Cards) > 1 {
+			lastAnnotatedCard  = game.Cards[len(game.Cards) - 2]
+		} else {
+			lastAnnotatedCard  = game.Cards[len(game.Cards) - 1]
+		}
+
+		var diagramId int64
+		diagram := &ChessDiagram {lastAnnotatedCard.Fen, fen2png(lastAnnotatedCard.Fen)}
+		if key, err := datastore.Put(c, datastore.NewIncompleteKey(c, "ChessDiagram", nil), diagram); err != nil {
+			handleInternalError(c, w, "GameHandler: datastore ops failed while writing opengraph data image", err)
+			return
+		} else {
+			diagramId = key.IntID()
+		}
+		game.OpenGraph.Title = fmt.Sprintf("%s - %s %s %s %s", game.Tags.White, game.Tags.Black, game.Tags.Result, game.Tags.Event, game.Tags.Date)
+		game.OpenGraph.Type = "article"
+		game.OpenGraph.Image = fmt.Sprintf("http://hyper-fen.appspot.com/diagrams/%d", diagramId) 
+		game.OpenGraph.ImageType = "image/png"
+		game.OpenGraph.URL = fmt.Sprintf("http://hyper-fen.appspot.com/publications/%s/%d", key, id)
+		if game.Tags.Annotator != "" {
+			game.OpenGraph.Description = "Annotated by " + game.Tags.Annotator
+		} else {
+			game.OpenGraph.Description = "Not Annotated"
+		}
+		game.OpenGraph.Sitename = "HyperFen"
+		game.OpenGraph.PublishedTime = time.Now() // this is wrong. to get the correct value read the publication
+		game.OpenGraph.Author = game.Tags.Annotator
+		if _, err := datastore.Put(c, gameKey, &game); err != nil {
+			handleInternalError(c, w, "GameHandler: datastore ops failed while updating opengraph data", err)
+			return
+		}
+	}
+	renderHtmlResponse(w, http.StatusOK, "game", game);
 }
 
 
@@ -303,6 +341,27 @@ func PublicationHandler(w http.ResponseWriter, r *http.Request) {
 
 	publication.Games = games
 	renderHtmlResponse(w, http.StatusOK, "publication", publication);
+}
+
+
+func DiagramHandler(w http.ResponseWriter, r *http.Request) {
+	c := appengine.NewContext(r)
+	id, _ := strconv.ParseInt(r.URL.Query().Get(":id"), 10, 64)
+
+	diagramKey := datastore.NewKey(c, "ChessDiagram", "", id, nil)
+	var diagram ChessDiagram
+	switch err := datastore.Get(c, diagramKey, &diagram); true {
+	case err == datastore.ErrNoSuchEntity:
+		renderHtmlResponse(w, http.StatusBadRequest, "error", fmt.Errorf("There is no diagram with id %d", id));
+		return
+	case err != nil:
+		handleInternalError(c, w, "PublicationHandler: fetch Diagram: datastore ops failed", err)
+		return
+	}
+
+	w.Header().Set("Content-Type", "image/png")
+	w.WriteHeader(http.StatusOK)
+	w.Write(diagram.Pgnbytes)
 }
 
 

@@ -1,6 +1,6 @@
 {{define "header"}}
 <!DOCTYPE html>
-<html>
+<html prefix="og: http://ogp.me/ns# article: http://ogp.me/ns/article#" >
 
 <head>
   <meta charset="utf-8"/>
@@ -11,6 +11,7 @@
   <script src="/js/hyperfen.js"></script>
   <script src="/js/pgnyui.js"></script>
   <script src="/js/pgnviewer.js"></script>
+  {{if .OpenGraph}} {{template "opengraph" .OpenGraph}} {{end}}
 </head>
 
 <body>
@@ -175,7 +176,7 @@ Enjoy!!
 
 
 {{define "game"}}
-{{template "header"}}
+{{template "header" .}}
 <div class="chess-game">
   <div class="game-header">
     {{with .Tags}}
@@ -221,4 +222,15 @@ Enjoy!!
 Application Error: <span class="errorDescription">{{.}}</span>
 </div>
 {{template "footer"}}
+{{end}}
+
+
+{{define "opengraph"}}
+<meta property="og:title" content="{{.Title}}" />
+<meta property="og:type" content="{{.Type}}" />
+<meta property="og:image" content="{{.Image}}" />
+<meta property="og:image:type" content="{{.ImageType}}" />
+<meta property="og:url" content="{{.URL}}" />
+<meta property="og:description" content="{{.Description | printf "%s"}}" />
+<meta property="og:site_name" content="{{.Sitename}}" />
 {{end}}
